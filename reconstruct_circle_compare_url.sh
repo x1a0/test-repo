@@ -21,16 +21,6 @@ set -o xtrace
 # absolute path of this script
 SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
 
-## UTILS
-
-extract_commit_from_job () {
-    # abstract this logic out, it gets reused a few times
-    # takes $1 (VCS_TYPE) & $2 (a job number)
-    curl --user ${CIRCLE_TOKEN}: \
-        https://circleci.com/api/v1.1/project/$1/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/$2 | \
-        grep '"vcs_revision" : ' | sed -E 's/"vcs_revision" ://' | sed -E 's/[[:punct:]]//g' | sed -E 's/ //g'
-}
-
 ## SETUP
 
 VCS_TYPE=github
@@ -57,7 +47,7 @@ else
     until [[ $FOUND_BASE_COMPARE_COMMIT == true ]]
     do
         # save circle api output to a temp file for reuse
-        curl --user ${CIRCLE_TOKEN}: \
+        curl --silent --user ${CIRCLE_TOKEN}: \
             https://circleci.com/api/v1.1/project/$VCS_TYPE/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/$JOB_NUM \
             > JOB_OUTPUT
 
@@ -73,11 +63,11 @@ else
 
         FOUND_BASE_COMPARE_COMMIT=true
 
+        BASE_COMPARE_COMMIT=$(cat JOB_OUTPUT | grep '"vcs_revision" : ' | sed -E 's/"vcs_revision" ://' | sed -E 's/[[:punct:]]//g' | sed -E 's/ //g')
+        GIT_DIFF_OUT=$(git diff "${BASE_COMPARE_COMMIT:0:12}...${CIRCLE_SHA1:0:12}" --name-status)
+
         # clean up
         rm -f JOB_OUTPUT
-
-        BASE_COMPARE_COMMIT=$(extract_commit_from_job $VCS_TYPE $JOB_NUM)
-        GIT_DIFF_OUT=$(git diff "${BASE_COMPARE_COMMIT:0:12}...${CIRCLE_SHA1:0:12}" --name-status)
     done
 fi
 
