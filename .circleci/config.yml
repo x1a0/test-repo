@@ -13,26 +13,9 @@ jobs:
       - run:
           name: Reconstruct Circle Compare URL
           command: |
-            ./reconstruct_circle_compare_url.sh
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project
-
-  find_files_changed:
-    resource_class: small
-    docker:
-      - image: circleci/python:buster
-    working_directory: ~/project
-    environment:
-      MASTER_BRANCH: master
-    steps:
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Find files changed
-          command: |
             set -o errexit
+
+            ./reconstruct_circle_compare_url.sh
 
             CIRCLE_COMPARE_URL=$(cat ./CIRCLE_COMPARE_URL.txt)
             echo "CIRCLE_COMPARE_URL: ${CIRCLE_COMPARE_URL}"
@@ -49,12 +32,15 @@ jobs:
             echo "git diff:"
             echo "${DIFF}"
 
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project
+
 workflows:
   version: 2
   test_flow:
     jobs:
-      - reconstruct_circle_compare_url
-
-      - find_files_changed:
-          requires:
-            - reconstruct_circle_compare_url
+      - reconstruct_circle_compare_url:
+          filters:
+            only: master
