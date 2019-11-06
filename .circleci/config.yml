@@ -33,6 +33,8 @@ jobs:
             echo "git diff:"
             echo "${DIFF}"
 
+            exit 128
+
       - persist_to_workspace:
           root: ~/
           paths:
