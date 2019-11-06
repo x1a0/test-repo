@@ -43,4 +43,5 @@ workflows:
     jobs:
       - reconstruct_circle_compare_url:
           filters:
-            only: master
+            branches:
+              only: master
