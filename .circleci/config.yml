@@ -13,14 +13,48 @@ jobs:
       - run:
           name: Reconstruct Circle Compare URL
           command: |
-            ./tools/circleci/reconstruct_circle_compare_url.sh
+            ./reconstruct_circle_compare_url.sh
       - persist_to_workspace:
           root: ~/
           paths:
             - project
+
+  find_files_changed:
+    resource_class: small
+    docker:
+      - image: circleci/python:buster
+    working_directory: ~/project
+    environment:
+      MASTER_BRANCH: master
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Find files changed
+          command: |
+            set -o errexit
+
+            CIRCLE_COMPARE_URL=$(cat ./CIRCLE_COMPARE_URL.txt)
+            echo "CIRCLE_COMPARE_URL: ${CIRCLE_COMPARE_URL}"
+            COMMIT_RANGE=$(echo "${CIRCLE_COMPARE_URL}" | sed 's:^.*/compare/::g')
+            echo "Commit range: ${COMMIT_RANGE}"
+
+            # For non-master branch we diff with master.
+            # For master branch we diff with previous build.
+            if [[ "${CIRCLE_BRANCH}" != "${MASTER_BRANCH}" ]]; then
+              DIFF=$(git diff "origin/${MASTER_BRANCH}" --name-status)
+            else
+              DIFF=$(git diff "${COMMIT_RANGE}" --name-status)
+            fi
+            echo "git diff:"
+            echo "${DIFF}"
 
 workflows:
   version: 2
   test_flow:
     jobs:
       - reconstruct_circle_compare_url
+
+      - find_files_changed:
+          requires:
+            - reconstruct_circle_compare_url
