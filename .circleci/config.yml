@@ -1,0 +1,26 @@
+version: 2.1
+
+jobs:
+  reconstruct_circle_compare_url:
+    resource_class: small
+    docker:
+      - image: circleci/python:buster
+    working_directory: ~/project
+    environment:
+      CIRCLE_COMPARE_URL_DEBUG: true
+    steps:
+      - checkout
+      - run:
+          name: Reconstruct Circle Compare URL
+          command: |
+            ./tools/circleci/reconstruct_circle_compare_url.sh
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project
+
+workflows:
+  version: 2
+  test_flow:
+    jobs:
+      - reconstruct_circle_compare_url
