@@ -23,7 +23,7 @@ jobs:
 
       - slack/notify:
           channel: "random"
-          message: "Something got update: ${PUSHED}"
+          message: "Something got update:\n$(cat PUSHED)"
 
 
 
