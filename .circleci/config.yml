@@ -10,7 +10,7 @@ jobs:
       - image: circleci/python:buster
     working_directory: ~/project
     environment:
-      PUSHED: ""
+      PUSHED: "foo bar"
     steps:
       - checkout
 
